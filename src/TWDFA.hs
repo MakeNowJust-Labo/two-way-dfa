@@ -34,31 +34,20 @@ runTWDFA' :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -
 runTWDFA' twdfa@(TWDFA {..}) cs = head $ dropWhile (flip notElem [accept, reject] . fst . last) $ tail $ inits $ runTWDFA twdfa cs
 
 data States
-  = Qs | Qt | Qr
-  | Qa0 | Qa1
-  | Qb0 | Qb1 | Qb2
+  = Qt | Qr
+  | Qq0 | Qq1 | Qq2
+  | Qp0 | Qp1
   deriving (Eq, Ord, Show)
 
 data CharAB = A | B
   deriving (Eq, Ord, Show)
 
 sample1 :: TWDFA States CharAB
-sample1 = TWDFA trans1 Qs Qt Qr
+sample1 = TWDFA trans1 Qq0 Qt Qr
   where
   trans1 = Map.fromList [
-    ((Qs , LeftEnd ), (Qa0, R)),
-    ((Qa0, Inner A ), (Qa1, R)),
-    ((Qa1, Inner A ), (Qa0, R)),
-    ((Qa0, Inner B ), (Qa0, R)),
-    ((Qa1, Inner B ), (Qa1, R)),
-    ((Qa0, RightEnd), (Qb0, L)),
-    ((Qa1, RightEnd), (Qr , L)),
-    ((Qb0, Inner B ), (Qb1, L)),
-    ((Qb1, Inner B ), (Qb2, L)),
-    ((Qb2, Inner B ), (Qb0, L)),
-    ((Qb0, Inner A ), (Qb0, L)),
-    ((Qb1, Inner A ), (Qb1, L)),
-    ((Qb2, Inner A ), (Qb2, L)),
-    ((Qb0, LeftEnd ), (Qt , R)),
-    ((Qb1, LeftEnd ), (Qr , R)),
-    ((Qb2, LeftEnd ), (Qr , R))]
+    ((Qq0, LeftEnd), (Qq0, R)), ((Qq0, Inner A), (Qq1, R)), ((Qq0, Inner B), (Qq0, R)), ((Qq0, RightEnd), (Qp0, L)),
+                                ((Qq1, Inner A), (Qq2, R)), ((Qq1, Inner B), (Qq1, R)), ((Qq1, RightEnd), (Qr , L)),
+                                ((Qq2, Inner A), (Qq0, R)), ((Qq2, Inner B), (Qq2, R)), ((Qq2, RightEnd), (Qr , L)),
+    ((Qp0, LeftEnd), (Qt , R)), ((Qp0, Inner A), (Qp0, L)), ((Qp0, Inner B), (Qp1, L)),
+    ((Qp1, LeftEnd), (Qr , R)), ((Qp1, Inner A), (Qp1, L)), ((Qp1, Inner B), (Qp1, L))]
