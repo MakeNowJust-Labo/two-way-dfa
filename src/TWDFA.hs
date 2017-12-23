@@ -1,53 +1,64 @@
 {-# LANGUAGE RecordWildCards #-}
 module TWDFA where
 
-import           Control.Arrow   (second)
-import           Data.List       (inits)
-import           Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import           Control.Arrow (second)
+import           Data.List     (inits)
 
-data TWDFA states alphabet = TWDFA
-  { trans  :: Map (states, WithEndmark alphabet) (states, Dir)
-  , start  :: states
-  , accept :: states
-  , reject :: states
-  } deriving (Show)
+data TWDFA s a = TWDFA
+  { trans  :: s -> WithEndmark a -> (s, Dir)
+  , start  :: s
+  , accept :: s
+  , reject :: s
+  }
 
 data Dir = L | R
-  deriving (Eq, Show)
+  deriving Show
 
 data WithEndmark alphabet
   = LeftEnd
   | Inner alphabet
   | RightEnd
-  deriving (Eq, Ord, Show)
+  deriving Show
 
-runTWDFA :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
-runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $ iterate f (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd]))
-  where
-  f (q, (ls'@(~(l:ls)), r:rs)) = case Map.lookup (q, r) trans of
-    Just (q', R) -> (q', (r:ls', rs))
-    Just (q', L) -> (q', (ls, l:r:rs))
-    Nothing      -> (reject, (ls, r:rs))
+runTWDFA :: TWDFA s a -> [a] -> [(s, Int)]
+runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $
+  flip iterate (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd])) $ \(q, (ls'@(~(l:ls)), r:rs))-> case trans q r of
+    (q', R) -> (q', (r:ls', rs))
+    (q', L) -> (q', (ls, l:r:rs))
 
-runTWDFA' :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
+runTWDFA' :: Eq s => TWDFA s a -> [a] -> [(s, Int)]
 runTWDFA' twdfa@(TWDFA {..}) cs = head $ dropWhile (flip notElem [accept, reject] . fst . last) $ tail $ inits $ runTWDFA twdfa cs
 
 data States
   = Qt | Qr
   | Qq0 | Qq1 | Qq2
   | Qp0 | Qp1
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Show)
 
 data CharAB = A | B
-  deriving (Eq, Ord, Show)
+  deriving Show
 
-sample1 :: TWDFA States CharAB
-sample1 = TWDFA trans1 Qq0 Qt Qr
+example1 :: TWDFA States CharAB
+example1 = TWDFA trans Qq0 Qt Qr
   where
-  trans1 = Map.fromList [
-    ((Qq0, LeftEnd), (Qq0, R)), ((Qq0, Inner A), (Qq1, R)), ((Qq0, Inner B), (Qq0, R)), ((Qq0, RightEnd), (Qp0, L)),
-                                ((Qq1, Inner A), (Qq2, R)), ((Qq1, Inner B), (Qq1, R)), ((Qq1, RightEnd), (Qr , L)),
-                                ((Qq2, Inner A), (Qq0, R)), ((Qq2, Inner B), (Qq2, R)), ((Qq2, RightEnd), (Qr , L)),
-    ((Qp0, LeftEnd), (Qt , R)), ((Qp0, Inner A), (Qp0, L)), ((Qp0, Inner B), (Qp1, L)),
-    ((Qp1, LeftEnd), (Qr , R)), ((Qp1, Inner A), (Qp1, L)), ((Qp1, Inner B), (Qp1, L))]
+  -- q0
+  trans Qq0 LeftEnd   = (Qq0, R)
+  trans Qq0 (Inner A) = (Qq1, R)
+  trans Qq0 (Inner B) = (Qq0, R)
+  trans Qq0 RightEnd  = (Qp0, L)
+  -- q1
+  trans Qq1 (Inner A) = (Qq2, R)
+  trans Qq1 (Inner B) = (Qq1, R)
+  trans Qq1 RightEnd  = (Qr , L)
+  -- q2
+  trans Qq2 (Inner A) = (Qq0, R)
+  trans Qq2 (Inner B) = (Qq2, R)
+  trans Qq2 RightEnd  = (Qr , L)
+  -- p0
+  trans Qp0 LeftEnd   = (Qt , R)
+  trans Qp0 (Inner A) = (Qp0, L)
+  trans Qp0 (Inner B) = (Qp1, L)
+  -- p1
+  trans Qp1 LeftEnd   = (Qr , R)
+  trans Qp1 (Inner A) = (Qp1, L)
+  trans Qp1 (Inner B) = (Qp0, L)
