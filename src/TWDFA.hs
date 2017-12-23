@@ -1,18 +1,17 @@
 {-# LANGUAGE RecordWildCards #-}
 module TWDFA where
 
-import Control.Arrow (second)
-import Data.Map.Strict (Map)
+import           Control.Arrow   (second)
+import           Data.List       (inits)
+import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.List (inits)
 
 data TWDFA states alphabet = TWDFA
-  { trans :: Map (states, WithEndmark alphabet) (states, Dir)
-  , start :: states
+  { trans  :: Map (states, WithEndmark alphabet) (states, Dir)
+  , start  :: states
   , accept :: states
   , reject :: states
-  }
-  deriving (Show)
+  } deriving (Show)
 
 data Dir = L | R
   deriving (Eq, Show)
@@ -58,9 +57,8 @@ runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $ iterate f (start, ([], 
   where
   f (q, (ls'@(~(l:ls)), r:rs)) = case Map.lookup (q, r) trans of
     Just (q', R) -> (q', (r:ls', rs))
-    Just (q', L)  -> (q', (ls, l:r:rs))
-    Nothing -> (reject, (ls, r:rs))
-
+    Just (q', L) -> (q', (ls, l:r:rs))
+    Nothing      -> (reject, (ls, r:rs))
 
 runTWDFA' :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
 runTWDFA' twdfa@(TWDFA {..}) cs = head $ dropWhile (flip notElem [accept, reject] . fst . last) $ tail $ inits $ runTWDFA twdfa cs
