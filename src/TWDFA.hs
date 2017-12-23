@@ -22,6 +22,17 @@ data WithEndmark alphabet
   | RightEnd
   deriving (Eq, Ord, Show)
 
+runTWDFA :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
+runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $ iterate f (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd]))
+  where
+  f (q, (ls'@(~(l:ls)), r:rs)) = case Map.lookup (q, r) trans of
+    Just (q', R) -> (q', (r:ls', rs))
+    Just (q', L) -> (q', (ls, l:r:rs))
+    Nothing      -> (reject, (ls, r:rs))
+
+runTWDFA' :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
+runTWDFA' twdfa@(TWDFA {..}) cs = head $ dropWhile (flip notElem [accept, reject] . fst . last) $ tail $ inits $ runTWDFA twdfa cs
+
 data States
   = Qs | Qt | Qr
   | Qa0 | Qa1
@@ -51,14 +62,3 @@ sample1 = TWDFA trans1 Qs Qt Qr
     ((Qb0, LeftEnd ), (Qt , R)),
     ((Qb1, LeftEnd ), (Qr , R)),
     ((Qb2, LeftEnd ), (Qr , R))]
-
-runTWDFA :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
-runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $ iterate f (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd]))
-  where
-  f (q, (ls'@(~(l:ls)), r:rs)) = case Map.lookup (q, r) trans of
-    Just (q', R) -> (q', (r:ls', rs))
-    Just (q', L) -> (q', (ls, l:r:rs))
-    Nothing      -> (reject, (ls, r:rs))
-
-runTWDFA' :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
-runTWDFA' twdfa@(TWDFA {..}) cs = head $ dropWhile (flip notElem [accept, reject] . fst . last) $ tail $ inits $ runTWDFA twdfa cs
