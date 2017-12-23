@@ -1,0 +1,36 @@
+name:                two-way-dfa
+version:             0.1.0.0
+github:              "githubuser/two-way-dfa"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2017 Author name here"
+
+extra-source-files:
+  - README.md
+  - ChangeLog.md
+
+synopsis: |
+  TWDFA (Two-Way Deterministic Finite Automaton) implementation
+
+description: |
+  Please see the README
+  on Github at <https://github.com/githubuser/two-way-dfa#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - containers
+
+library:
+  source-dirs: src
+
+tests:
+  two-way-dfa-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - two-way-dfa
