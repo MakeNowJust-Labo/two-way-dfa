@@ -56,9 +56,9 @@ sample1 = TWDFA trans1 Qs Qt Qr
 runTWDFA :: (Ord states, Ord alphabet) => TWDFA states alphabet -> [alphabet] -> [(states, Int)]
 runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $ iterate f (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd]))
   where
-  f (q, (ls, r:rs)) = case Map.lookup (q, r) trans of
-    Just (q', R) -> (q', (r:ls, rs))
-    Just (q', L)  -> (q', (tail ls, head ls:r:rs))
+  f (q, (ls'@(~(l:ls)), r:rs)) = case Map.lookup (q, r) trans of
+    Just (q', R) -> (q', (r:ls', rs))
+    Just (q', L)  -> (q', (ls, l:r:rs))
     Nothing -> (reject, (ls, r:rs))
 
 
