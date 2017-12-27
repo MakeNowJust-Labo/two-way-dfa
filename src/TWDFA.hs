@@ -22,7 +22,8 @@ data WithEndmark alphabet
 
 runTWDFA :: TWDFA s a -> [a] -> [(s, Int)]
 runTWDFA (TWDFA {..}) cs = map (second (length . fst)) $
-  flip iterate (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd])) $ \(q, (ls'@(~(l:ls)), r:rs))-> case trans q r of
+  flip iterate (start, ([], [LeftEnd] ++ map Inner cs ++ [RightEnd])) $
+  \(q, (ls'@(~(l:ls)), r:rs))-> case trans q r of
     (q', R) -> (q', (r:ls', rs))
     (q', L) -> (q', (ls, l:r:rs))
 
@@ -62,3 +63,9 @@ example1 = TWDFA trans Qq0 Qt Qr
   trans Qp1 LeftEnd   = (Qr , R)
   trans Qp1 (Inner A) = (Qp1, L)
   trans Qp1 (Inner B) = (Qp0, L)
+  -- t
+  trans Qt RightEnd   = (Qt, L)
+  trans Qt _          = (Qt, R)
+  -- others
+  trans _ RightEnd    = (Qr, L)
+  trans _ _           = (Qr, R)
